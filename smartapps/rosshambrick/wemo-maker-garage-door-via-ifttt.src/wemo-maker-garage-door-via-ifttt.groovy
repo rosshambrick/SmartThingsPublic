@@ -30,11 +30,11 @@ preferences {
 		input "door", "capability.garageDoorControl", title: "Simulated Garage Door?", required: true
     }
 
-	section("Timeout before checking if the door opened or closed correctly?"){
-		input "checkTimeout", "number", title: "Door Operation Check Timeout?", required: true, defaultValue: 15
-	}
+//	section("Timeout before checking if the door opened or closed correctly?"){
+//		input "checkTimeout", "number", title: "Door Operation Check Timeout?", required: true, defaultValue: 15
+//	}
 
-	section( "Notifications" ) {
+	section("Notifications") {
 		input("recipients", "contact", title: "Send notifications to") {
             input "sendPushMessage", "enum", title: "Send a push notification?", options: ["Yes", "No"], required: false
             input "phone1", "phone", title: "Send a Text Message?", required: false
@@ -63,7 +63,6 @@ def initialize() {
         if (sensor.currentSwitch == "off") {
             log.debug "Setting simulated door to OPEN"
             door.open()
-            //door.currentDoor = "closed"
 		} else {
             log.debug "Setting simulated door to CLOSED"
             door.close()
@@ -94,6 +93,12 @@ def doorHandler(evt) {
     } else if (evt.value == "closing" && sensor.currentSwitch == "off") {
         log.debug "Closing the real door"
         triggerOpener()
+    } else if (evt.value == "open") {
+    	log.debug "Turning sensor off"
+        sensor.off()
+    } else if (evt.value == "closed") {
+    	log.debug "Turning sensor on"
+        sensor.on()
     } else {
     	log.debug "Nothing to do"
     }

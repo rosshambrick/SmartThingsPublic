@@ -14,7 +14,7 @@
  *
  */
 definition(
-	name: "WeMo Maker Garage Door via IFTTT", 
+    name: "WeMo Maker Garage Door via IFTTT", 
     namespace: "rosshambrick",
     author: "Ross Hambrick",
     description: "This app will allow you to hook up a WeMo Maker enabled garage door into SmartThings",
@@ -24,71 +24,71 @@ definition(
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
 
 preferences {
-	section("IFTTT Event Sources"){
-		input "opener", "capability.switch", title: "IFTTT Garage Door Opener?", required: true
-		input "sensor", "capability.switch", title: "IFTTT Garage Door Sensor?", required: true
-		input "door", "capability.garageDoorControl", title: "Simulated Garage Door?", required: true
+    section("IFTTT Event Sources"){
+        input "opener", "capability.switch", title: "IFTTT Garage Door Opener?", required: true
+        input "sensor", "capability.switch", title: "IFTTT Garage Door Sensor?", required: true
+        input "door", "capability.garageDoorControl", title: "Simulated Garage Door?", required: true
     }
 
 //	section("Timeout before checking if the door opened or closed correctly?"){
 //		input "checkTimeout", "number", title: "Door Operation Check Timeout?", required: true, defaultValue: 15
 //	}
 
-	section("Notifications") {
-		input("recipients", "contact", title: "Send notifications to") {
+    section("Notifications") {
+        input("recipients", "contact", title: "Send notifications to") {
             input "sendPushMessage", "enum", title: "Send a push notification?", options: ["Yes", "No"], required: false
             input "phone1", "phone", title: "Send a Text Message?", required: false
-		}
-	}
+        }
+    }
 }
 
 def installed() {
-	log.debug "Installed with settings: ${settings}"
-	initialize()
+    log.debug "Installed with settings: ${settings}"
+    initialize()
 }
 
 def updated() {
-	log.debug "Updated with settings: ${settings}"
-	unsubscribe()
-	initialize()
+    log.debug "Updated with settings: ${settings}"
+    unsubscribe()
+    initialize()
 }
 
 def initialize() {
-	subscribe(sensor, "switch", sensorHandler)
-   	subscribe(door, "door", doorHandler)
+    subscribe(sensor, "switch", sensorHandler)
+    subscribe(door, "door", doorHandler)
 
- 	if ((sensor.currentSwitch == "on") != (door.currentDoor == "closed")) {
-		log.debug "States are out of sync"
+    if ((sensor.currentSwitch == "on") != (door.currentDoor == "closed")) {
+        log.debug "States are out of sync"
 
         if (sensor.currentSwitch == "off") {
             log.debug "Setting simulated door to OPEN"
             door.open()
-		} else {
+        } else {
             log.debug "Setting simulated door to CLOSED"
             door.close()
-		}
-	}
+        }
+    }
 }
 
 def sensorHandler(evt) {
-	log.debug "sensorHandler(${evt.value})"
+    log.debug "sensorHandler(${evt.value})"
     
     if (evt.value == "on" && door.currentDoor != "closed") {
-		log.debug "Closing the simulated door"
-		door.close()
+        log.debug "Closing the simulated door"
+        door.close()
     } else if (evt.value == "off" && door.currentDoor != "open") {
-		log.debug "Opening the simulated door"
+        log.debug "Opening the simulated door"
         door.open()
     } else {
-    	log.debug "Nothing to do"
+        log.debug "Nothing to do"
     }
 }
 
 def doorHandler(evt) {
-	log.debug "doorHandler(${evt.value})"
+    log.debug "doorHandler(${evt.value})"
         
     if (evt.value == "opening" && sensor.currentSwitch == "on") {
-		log.debug "Opening the real door"
+        log.debug "Opening the real door"
         triggerOpener()
     } else if (evt.value == "closing" && sensor.currentSwitch == "off") {
         log.debug "Closing the real door"

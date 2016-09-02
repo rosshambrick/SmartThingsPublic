@@ -26,7 +26,7 @@ definition(
 preferences {
     section("IFTTT Event Sources"){
         input "opener", "capability.switch", title: "IFTTT Garage Door Opener?", required: true
-        input "sensor", "capability.switch", title: "IFTTT Garage Door Sensor?", required: true
+        input "sensor", "capability.contactSensor", title: "Garage Door Sensor?", required: true
         input "door", "capability.garageDoorControl", title: "Simulated Garage Door?", required: true
     }
 
@@ -54,13 +54,13 @@ def updated() {
 }
 
 def initialize() {
-    subscribe(sensor, "switch", sensorHandler)
+    subscribe(sensor, "contact", sensorHandler)
     subscribe(door, "door", doorHandler)
 
-    if ((sensor.currentSwitch == "on") != (door.currentDoor == "closed")) {
+    if ((sensor.currentContact == "closed") != (door.currentDoor == "closed")) {
         log.debug "States are out of sync"
 
-        if (sensor.currentSwitch == "off") {
+        if (sensor.currentContact == "open") {
             log.debug "Setting simulated door to OPEN"
             door.open()
         } else {
@@ -73,10 +73,10 @@ def initialize() {
 def sensorHandler(evt) {
     log.debug "sensorHandler(${evt.value})"
     
-    if (evt.value == "on" && door.currentDoor != "closed") {
+    if (evt.value == "closed" && door.currentDoor != "closed") {
         log.debug "Closing the simulated door"
         door.close()
-    } else if (evt.value == "off" && door.currentDoor != "open") {
+    } else if (evt.value == "open" && door.currentDoor != "open") {
         log.debug "Opening the simulated door"
         door.open()
     } else {
@@ -87,18 +87,12 @@ def sensorHandler(evt) {
 def doorHandler(evt) {
     log.debug "doorHandler(${evt.value})"
         
-    if (evt.value == "opening" && sensor.currentSwitch == "on") {
+    if (evt.value == "opening" && sensor.currentContact == "closed") {
         log.debug "Opening the real door"
         triggerOpener()
-    } else if (evt.value == "closing" && sensor.currentSwitch == "off") {
+    } else if (evt.value == "closing" && sensor.currentContact == "open") {
         log.debug "Closing the real door"
         triggerOpener()
-    } else if (evt.value == "open") {
-    	log.debug "Turning sensor off"
-        sensor.off()
-    } else if (evt.value == "closed") {
-    	log.debug "Turning sensor on"
-        sensor.on()
     } else {
     	log.debug "Nothing to do"
     }
@@ -136,20 +130,20 @@ def triggerOpener() {
 // }
 
 def checkIfActuallyClosed() {
-  def sensorState = sensor.currentSwitch
+  def sensorState = sensor.currentContact
   def doorState = door.currentDoor
  
-  if (sensorState == "off" && doorState == "closed") {
+  if (sensorState == "open" && doorState == "closed") {
    	log.debug "Didn't close as expected"
     door.open()
   }
 }
 
 def checkIfActuallyOpened() {
-  def sensorState = sensor.currentSwitch
+  def sensorState = sensor.currentContact
   def doorState = door.currentDoor
 
-  if (sensorState == "on" && doorState == "open") {
+  if (sensorState == "closed" && doorState == "open") {
 	log.debug "Didn't open as expected"
 	door.close()
   }

@@ -14,47 +14,69 @@
  *
  */
 definition(
-    name: "Flex Connect",
-    namespace: "rosshambrick",
-    author: "Ross Hambrick",
-    description: "A flexible way to connect any sensor, switch, etc to trigger any device, event, status, etc.",
-    category: "Convenience",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
-    iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
+        name: "Flex Connect",
+        namespace: "rosshambrick",
+        author: "Ross Hambrick",
+        description: "A flexible way to connect any sensor, switch, etc to trigger any device, event, status, etc.",
+        category: "Convenience",
+        iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
+        iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
+        iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
 
 
 preferences {
-    section("IF") {
-        input "ifMotion", "capability.motionSensor", title: "Motion detected", required: false, multiple: true
-        input "ifContactOpened", "capability.contactSensor", title: "Contact opened", required: false, multiple: true
-        input "ifContactClosed", "capability.contactSensor", title: "Contact closed", required: false, multiple: true
-    }
-    section("THEN") {
-        input "thenSwitchOn", "capability.switch", title: "Turn on", required: false, multiple: true
-        input "thenSwitchOff", "capability.switch", title: "Turn off", required: false, multiple: true
-        input "thenThermostat", "capability.thermostat", title: "Change temperature", required: false, submitOnChange: true
-        if (thenThermostat)	input "coolSetPoint", "decimal", title: "Cool Set Point", required: false 
+    page(name: "page")
+}
+
+def page() {
+    dynamicPage(name: "page") {
+        section("IF") {
+            input "ifMotion", "capability.motionSensor", title: "Motion detected", required: false, multiple: true
+            input "ifContactOpened", "capability.contactSensor", title: "Contact opened", required: false, multiple: true
+            input "ifContactClosed", "capability.contactSensor", title: "Contact closed", required: false, multiple: true
+        }
+        section("THEN") {
+            input "thenSwitchOn", "capability.switch", title: "Turn on", required: false, multiple: true
+            input "thenSwitchOff", "capability.switch", title: "Turn off", required: false, multiple: true
+            input "thenThermostat", "capability.thermostat", multiple: true, submitOnChange: true
+            if (thenThermostat) input "coolSetPoint", "decimal", title: "Cool Set Point", required: false
+            //        if (thenThermostat) input "thenThermostat2", "capability.thermostat", title: "Change temperature", required: false, submitOnChange: true
+        }
     }
 }
 
 def installed() {
-	log.debug "Installed with settings: ${settings}"
-	initialize()
+    log.debug "Installed with settings: ${settings}"
+    initialize()
 }
 
 def updated() {
-	log.debug "Updated with settings: ${settings}"
-	unsubscribe()
-	initialize()
+    log.debug "Updated with settings: ${settings}"
+    unsubscribe()
+    initialize()
 }
 
 def initialize() {
-	subscribe(ifMotion, "motion.active", motionDetectedHandler)
+    subscribe(ifMotion, "motion.active", motionDetectedHandler)
+    subscribe(ifContactOpened, "capability.contactSensor", ifContactOpenedHandler)
+    subscribe(ifContactClosed, "capability.contactSensor", ifContactClosedHandler)
+}
+
+def triggered() {
+    log.debug "triggered called"
+    if (thenSwitchOn) thenSwitchOn.on()
+    if (thenSwitchOff) thenSwitchOff.off()
 }
 
 def motionDetectedHandler(evt) {
     log.debug "motionDetectedHandler called: $evt"
-    if (thenSwitchOn)  thenSwitchOn.on()
-    if (thenSwitchOff) thenSwitchOff.off()
+    triggered()
+}
+
+def ifContactOpenedHandler(evt) {
+    log.debug "ifContactOpenedHandler called: $evt"
+}
+
+def ifContactClosedHandler(evt) {
+    log.debug "ifContactClosedHandler called: $evt"
 }
